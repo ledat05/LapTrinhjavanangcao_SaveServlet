@@ -6,11 +6,12 @@ package com.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import static java.lang.System.out;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,10 +19,9 @@ import my.common.DatabaseUtil;
 
 /**
  *
- * @author ADMIN
+ * @author Admin
  */
-@WebServlet(name = "SaveServlet", urlPatterns = {"/SaveServlet"})
-public class SaveServlet extends HttpServlet {
+public class ViewServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -36,51 +36,51 @@ public class SaveServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
-            //b1. Lay gia yti tham so tu clint
-            String uname = request.getParameter("uname");
-            String upass = request.getParameter("upass");
-            String umail = request.getParameter("umail");
-            String country = request.getParameter("country");
+            //b1
+
             //b2. Xy ly yeu cau(Truy cap CSDL de them moi user)
             Connection conn = null;
             PreparedStatement ps = null;
-                           conn=DatabaseUtil.getConnection();
-
+            ResultSet rs = null;
+            String data = "";
             try {
-                //1
-               conn=DatabaseUtil.getConnection();
-                //3 Tao doi tuong thi hanh truy van
-                ps = conn.prepareStatement("insert into users(name,password,email,country) values(?,?,?,?)");
-                //Truyen gia tri cho tham so trong cau lenh sql
-                ps.setString(1, uname);
-                ps.setString(2, upass);
-                ps.setString(3, umail);
-                                ps.setString(4,country);
-                                //4 Thi hanh truy van
-                                int kq=ps.executeUpdate();
-                                //5 xy ly ket qua va tra ve
-                                if(kq>0)
-                                {
-                                    out.println("<h2>Them user thanh cong</h2>");
-                                }else{
-                                    out.println("<h2>Them user that bai</h2>");
-                                }
-                                //6 dong ket noi
-                                conn.close();
+                conn = DatabaseUtil.getConnection();
 
+                //b3 tao doi tuong thi hanh truy van 
+                ps = conn.prepareStatement("select * from users");
+                //4. thi hanh truy van
+                rs = ps.executeQuery();
+                //5 xu ly ket qua tra ve
+                data += "<table border=\"1\">";
+                data += "<tr><th>Id</th><th>Name</th><th>Password</th><th>Email</th><th>Country</th><th>Edit</th><th>Delete</th></tr>";
+                while (rs.next()) {
+                    data += "<tr>";
+                    data += "<td>" + rs.getInt(1) + "</td>";
+                    data += "<td>" + rs.getString(2) + "</td>";
+                    data += "<td>" + rs.getString(3) + "</td>";
+                    data += "<td>" + rs.getString(4) + "</td>";
+                    data += "<td>" + rs.getString(5) + "</td>";
 
+                    data += "<td><a href=EditServlet?id=" + rs.getInt(1) + ">Edit</a></td>";
+                    data += "<td><a href=DeleteServlet?id=" + rs.getInt(1) + " onclick=\"return confirm('Are you sure to go ?')\">Delete</a></td>\n";
+                }
+                //6 dong ket noi
+                conn.close();
             } catch (Exception e) {
                 System.out.println("Loi:" + e.toString());
+                out.println("<h2>Them User That Bai</h2>");
             }
-            request.getRequestDispatcher("index.html").include(request, response);
 
             /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet SaveServlet</title>");
+            out.println("<title>Servlet ViewServlet</title>");
             out.println("</head>");
             out.println("<body>");
+            out.println("<h1>Servlet ViewServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Users List</h1>");
+            out.println(data);
             out.println("</body>");
             out.println("</html>");
         }
